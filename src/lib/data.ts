@@ -50,7 +50,7 @@ export const internships: Internship[] = [
     id: '6',
     title: 'Software Engineer Intern',
     company: 'Amazon',
-    location: 'Hyderabad',
+    location: 'Bangalore',
     stipend: '₹45,000/month',
     duration: '6 Months',
     postedDate: '10 days ago',

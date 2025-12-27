@@ -2,7 +2,6 @@
 
 import { useFormState, useFormStatus } from 'react-dom';
 import { useEffect, useState, useRef } from 'react';
-import Image from 'next/image';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -21,9 +20,12 @@ import {
   Loader2,
   Sparkles,
   Target,
+  Upload,
 } from 'lucide-react';
 import { Badge } from '../ui/badge';
 import { cn } from '@/lib/utils';
+import * as pdfjs from 'pdfjs-dist';
+import 'pdfjs-dist/build/pdf.worker.min.mjs';
 
 const initialState: FormState = {
   status: 'idle',
@@ -53,6 +55,7 @@ export function ResumeAnalyzer() {
   const { toast } = useToast();
   const [isDragging, setIsDragging] = useState(false);
   const resumeTextAreaRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (state.status === 'error' && state.message) {
@@ -63,6 +66,65 @@ export function ResumeAnalyzer() {
       });
     }
   }, [state, toast]);
+
+  const handleFile = async (file: File) => {
+    if (file.type === 'text/plain') {
+      const reader = new FileReader();
+      reader.onload = (loadEvent) => {
+        const text = loadEvent.target?.result;
+        if (typeof text === 'string' && resumeTextAreaRef.current) {
+          resumeTextAreaRef.current.value = text;
+          toast({
+            title: 'File Loaded',
+            description: `${file.name} content has been pasted.`,
+          });
+        }
+      };
+      reader.onerror = () => {
+        toast({
+          variant: 'destructive',
+          title: 'File Read Error',
+          description: `Could not read the file ${file.name}.`,
+        });
+      };
+      reader.readAsText(file);
+    } else if (file.type === 'application/pdf') {
+      try {
+        const reader = new FileReader();
+        reader.onload = async (event) => {
+          if (!event.target?.result) return;
+          const pdfData = new Uint8Array(event.target.result as ArrayBuffer);
+          const pdf = await pdfjs.getDocument({ data: pdfData }).promise;
+          let textContent = '';
+          for (let i = 1; i <= pdf.numPages; i++) {
+            const page = await pdf.getPage(i);
+            const text = await page.getTextContent();
+            textContent += text.items.map((s) => (s as any).str).join(' ');
+          }
+          if (resumeTextAreaRef.current) {
+            resumeTextAreaRef.current.value = textContent;
+            toast({
+              title: 'PDF Parsed',
+              description: `Extracted text from ${file.name}.`,
+            });
+          }
+        };
+        reader.readAsArrayBuffer(file);
+      } catch (error) {
+        toast({
+          variant: 'destructive',
+          title: 'PDF Parsing Error',
+          description: 'Could not extract text from the PDF.',
+        });
+      }
+    } else {
+      toast({
+        variant: 'destructive',
+        title: 'Unsupported File Type',
+        description: 'Please upload a .txt or .pdf file.',
+      });
+    }
+  };
 
   const handleDragEnter = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
@@ -88,35 +150,14 @@ export function ResumeAnalyzer() {
 
     const files = e.dataTransfer.files;
     if (files && files.length > 0) {
-      const file = files[0];
-      // For now, we only support plain text files. PDF parsing would require a library.
-      if (file.type === "text/plain") {
-        const reader = new FileReader();
-        reader.onload = (loadEvent) => {
-          const text = loadEvent.target?.result;
-          if (typeof text === 'string' && resumeTextAreaRef.current) {
-            resumeTextAreaRef.current.value = text;
-             toast({
-              title: "File Loaded",
-              description: `${file.name} content has been pasted into the text area.`,
-            });
-          }
-        };
-        reader.onerror = () => {
-           toast({
-            variant: "destructive",
-            title: "File Read Error",
-            description: `Could not read the file ${file.name}.`,
-          });
-        }
-        reader.readAsText(file);
-      } else {
-         toast({
-          variant: "destructive",
-          title: "Unsupported File Type",
-          description: "Please drop a plain text (.txt) file.",
-        });
-      }
+      handleFile(files[0]);
+    }
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files && files.length > 0) {
+      handleFile(files[0]);
     }
   };
 
@@ -134,13 +175,33 @@ export function ResumeAnalyzer() {
       >
         <CardHeader>
           <CardTitle className="font-headline text-2xl">Let's Get Started</CardTitle>
-          <CardDescription>Paste your resume details or drop a text file.</CardDescription>
+          <CardDescription>
+            Paste your resume, drop a file, or click to upload.
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <form action={formAction} className="space-y-6">
             <div className="space-y-2 relative">
-              <Label htmlFor="resumeText">Paste Your Resume</Label>
-               {isDragging && (
+              <div className="flex justify-between items-center">
+                <Label htmlFor="resumeText">Paste Your Resume</Label>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  <Upload className="mr-2 h-4 w-4" />
+                  Upload File
+                </Button>
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleFileChange}
+                  className="hidden"
+                  accept=".txt,.pdf"
+                />
+              </div>
+              {isDragging && (
                 <div className="absolute inset-0 bg-primary/10 flex flex-col items-center justify-center rounded-md z-10 pointer-events-none">
                   <FileUp className="h-12 w-12 text-primary" />
                   <p className="mt-2 font-semibold text-primary">Drop your resume file here</p>
@@ -157,12 +218,7 @@ export function ResumeAnalyzer() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="targetRole">Target Job Role</Label>
-              <Input
-                id="targetRole"
-                name="targetRole"
-                placeholder="e.g., Senior Frontend Developer"
-                required
-              />
+              <Input id="targetRole" name="targetRole" placeholder="e.g., Senior Frontend Developer" required />
             </div>
             <SubmitButton />
           </form>
@@ -194,9 +250,7 @@ export function ResumeAnalyzer() {
           <Alert variant="destructive">
             <AlertCircle className="h-4 w-4" />
             <AlertTitle>Analysis Failed</AlertTitle>
-            <AlertDescription>
-              {state.message} Please review your input and try again.
-            </AlertDescription>
+            <AlertDescription>{state.message} Please review your input and try again.</AlertDescription>
           </Alert>
         )}
 
@@ -207,9 +261,7 @@ export function ResumeAnalyzer() {
                 <Sparkles className="text-primary" /> Analysis for:{' '}
                 <span className="text-primary">{state.data.targetRole}</span>
               </CardTitle>
-              <CardDescription>
-                Here is your personalized skill gap analysis and roadmap.
-              </CardDescription>
+              <CardDescription>Here is your personalized skill gap analysis and roadmap.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div>
@@ -251,9 +303,7 @@ export function ResumeAnalyzer() {
                             <BookOpen className="text-primary h-4 w-4" />
                             Suggested Course:
                           </p>
-                          <p className="text-sm text-muted-foreground pl-6">
-                            {item.suggestedCourse}
-                          </p>
+                          <p className="text-sm text-muted-foreground pl-6">{item.suggestedCourse}</p>
                         </CardContent>
                       </Card>
                     ))}

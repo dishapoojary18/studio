@@ -1,8 +1,5 @@
 import { internships } from '@/lib/data';
-import { InternshipCard } from '@/components/internships/internship-card';
 import { InternshipList } from '@/components/internships/internship-list';
-import type { Internship } from '@/lib/types';
-import { Briefcase } from 'lucide-react';
 
 export default function InternshipsPage({
   searchParams,
@@ -13,11 +10,19 @@ export default function InternshipsPage({
 }) {
   const location = searchParams?.location || 'all';
 
-  const filteredInternships = internships.filter(
-    (internship) => location === 'all' || internship.location === location
+  const karnatakaInternships = internships.filter(
+    (internship) => internship.location === 'Bangalore'
   );
 
-  const locations = ['all', ...new Set(internships.map((i) => i.location))];
+  const filteredInternships =
+    location === 'all'
+      ? karnatakaInternships
+      : karnatakaInternships.filter((internship) => internship.location === location);
+
+  const locations = [
+    'all',
+    ...new Set(internships.map((i) => i.location)),
+  ];
 
   return (
     <div className="container mx-auto py-12 px-4 md:px-6">
@@ -26,7 +31,7 @@ export default function InternshipsPage({
           Find Your Next Internship
         </h1>
         <p className="max-w-2xl mx-auto text-lg text-muted-foreground">
-          Explore opportunities to gain valuable industry experience.
+          Explore opportunities to gain valuable industry experience in Karnataka.
         </p>
       </div>
 
