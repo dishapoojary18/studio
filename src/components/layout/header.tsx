@@ -37,6 +37,8 @@ const components: { title: string; href: string; description: string, icon: Reac
 export function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
 
+  const closeMobileMenu = () => setIsMobileMenuOpen(false);
+
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-white/80 backdrop-blur-sm">
       <div className="container flex h-16 items-center">
@@ -119,18 +121,18 @@ export function Header() {
       {isMobileMenuOpen && (
         <div className="md:hidden p-4 border-t bg-white">
           <nav className="grid gap-4 text-lg">
-            <Link href="/" className="font-semibold" onClick={() => setIsMobileMenuOpen(false)}>Home</Link>
-            <Link href="/internships" className="text-muted-foreground" onClick={() => setIsMobileMenuOpen(false)}>Internships</Link>
-            <Link href="/templates" className="text-muted-foreground" onClick={() => setIsMobileMenuOpen(false)}>Templates</Link>
-            <Link href="/about" className="font-semibold" onClick={() => setIsMobileMenuOpen(false)}>About</Link>
-            <Link href="/qa" className="font-semibold" onClick={() => setIsMobileMenuOpen(false)}>Q/A</Link>
-            <Link href="/rating" className="font-semibold" onClick={() => setIsMobileMenuOpen(false)}>Rating</Link>
+            <Link href="/" className="font-semibold" onClick={closeMobileMenu}>Home</Link>
+            <Link href="/internships" className="text-muted-foreground" onClick={closeMobileMenu}>Internships</Link>
+            <Link href="/templates" className="text-muted-foreground" onClick={closeMobileMenu}>Templates</Link>
+            <Link href="/about" className="font-semibold" onClick={closeMobileMenu}>About</Link>
+            <Link href="/qa" className="font-semibold" onClick={closeMobileMenu}>Q/A</Link>
+            <Link href="/rating" className="font-semibold" onClick={closeMobileMenu}>Rating</Link>
             <div className="flex flex-col gap-2 mt-4">
               <Button variant="ghost" asChild>
-                <Link href="/login" onClick={() => setIsMobileMenuOpen(false)}>Login</Link>
+                <Link href="/login" onClick={closeMobileMenu}>Login</Link>
               </Button>
               <Button asChild>
-                <Link href="/signup" onClick={() => setIsMobileMenuOpen(false)}>Sign Up</Link>
+                <Link href="/signup" onClick={closeMobileMenu}>Sign Up</Link>
               </Button>
             </div>
           </nav>
