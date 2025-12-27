@@ -1,7 +1,7 @@
 'use client';
 
-import { useFormState, useFormStatus } from 'react-dom';
-import { useEffect, useState, useRef } from 'react';
+import { useActionState, useEffect, useState, useRef } from 'react';
+import { useFormStatus } from 'react-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -51,7 +51,7 @@ function SubmitButton() {
 }
 
 export function ResumeAnalyzer() {
-  const [state, formAction] = useFormState(analyzeResume, initialState);
+  const [state, formAction] = useActionState(analyzeResume, initialState);
   const { toast } = useToast();
   const [isDragging, setIsDragging] = useState(false);
   const resumeTextAreaRef = useRef<HTMLTextAreaElement>(null);
