@@ -69,25 +69,19 @@ export function Header() {
                 </NavigationMenuContent>
               </NavigationMenuItem>
               <NavigationMenuItem>
-                <Link href="/about" passHref asChild>
-                  <NavigationMenuLink className={navigationMenuTriggerStyle()}>
-                    About
-                  </NavigationMenuLink>
-                </Link>
+                <NavigationMenuLink asChild className={navigationMenuTriggerStyle()}>
+                  <Link href="/about">About</Link>
+                </NavigationMenuLink>
               </NavigationMenuItem>
               <NavigationMenuItem>
-                <Link href="/qa" passHref asChild>
-                  <NavigationMenuLink className={navigationMenuTriggerStyle()}>
-                    Q/A
-                  </NavigationMenuLink>
-                </Link>
+                <NavigationMenuLink asChild className={navigationMenuTriggerStyle()}>
+                  <Link href="/qa">Q/A</Link>
+                </NavigationMenuLink>
               </NavigationMenuItem>
               <NavigationMenuItem>
-                <Link href="/rating" passHref asChild>
-                  <NavigationMenuLink className={navigationMenuTriggerStyle()}>
-                    Rating
-                  </NavigationMenuLink>
-                </Link>
+                 <NavigationMenuLink asChild className={navigationMenuTriggerStyle()}>
+                  <Link href="/rating">Rating</Link>
+                </NavigationMenuLink>
               </NavigationMenuItem>
             </NavigationMenuList>
           </NavigationMenu>
