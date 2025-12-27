@@ -176,50 +176,55 @@ export function ResumeAnalyzer() {
         </CardHeader>
         <CardContent>
           <form action={formAction} className="space-y-6">
-            <div
-              className={cn(
-                'space-y-2 relative rounded-lg',
-                isDragging && 'ring-4 ring-primary/20'
-              )}
+             <div
+              className="space-y-2 relative"
               onDragEnter={handleDragEnter}
               onDragLeave={handleDragLeave}
               onDragOver={handleDragOver}
               onDrop={handleDrop}
             >
-              <div className="flex justify-between items-center">
-                <Label htmlFor="resumeText">Paste Your Resume</Label>
-                <Button
+              <div
+                className={cn(
+                  'rounded-lg',
+                  isDragging && 'ring-4 ring-primary/20'
+                )}
+              >
+                <div className="flex justify-between items-center mb-2">
+                  <Label htmlFor="resumeText">Paste Your Resume</Label>
+                   <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleFileChange}
+                    className="hidden"
+                    accept=".txt,.pdf"
+                  />
+                </div>
+
+                <Textarea
+                  ref={resumeTextAreaRef}
+                  id="resumeText"
+                  name="resumeText"
+                  placeholder="Paste the full text of your resume here..."
+                  className={cn('min-h-[250px]', isDragging && 'border-primary bg-primary/5')}
+                  required
+                />
+                {isDragging && (
+                  <div className="absolute inset-0 bg-primary/10 flex flex-col items-center justify-center rounded-md z-10 pointer-events-none">
+                    <FileUp className="h-12 w-12 text-primary" />
+                    <p className="mt-2 font-semibold text-primary">Drop your resume file here</p>
+                  </div>
+                )}
+              </div>
+                 <Button
                   type="button"
                   variant="outline"
                   size="sm"
                   onClick={() => fileInputRef.current?.click()}
+                  className="w-full mt-2"
                 >
                   <Upload className="mr-2 h-4 w-4" />
                   Upload File
                 </Button>
-                <input
-                  type="file"
-                  ref={fileInputRef}
-                  onChange={handleFileChange}
-                  className="hidden"
-                  accept=".txt,.pdf"
-                />
-              </div>
-
-              <Textarea
-                ref={resumeTextAreaRef}
-                id="resumeText"
-                name="resumeText"
-                placeholder="Paste the full text of your resume here..."
-                className={cn('min-h-[250px]', isDragging && 'border-primary bg-primary/5')}
-                required
-              />
-              {isDragging && (
-                <div className="absolute inset-0 bg-primary/10 flex flex-col items-center justify-center rounded-md z-10 pointer-events-none">
-                  <FileUp className="h-12 w-12 text-primary" />
-                  <p className="mt-2 font-semibold text-primary">Drop your resume file here</p>
-                </div>
-              )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="targetRole">Target Job Role</Label>
