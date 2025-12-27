@@ -166,12 +166,7 @@ export function ResumeAnalyzer() {
       <Card
         className={cn(
           'w-full shadow-lg bg-white transition-all',
-          isDragging && 'border-primary ring-4 ring-primary/20'
         )}
-        onDragEnter={handleDragEnter}
-        onDragLeave={handleDragLeave}
-        onDragOver={handleDragOver}
-        onDrop={handleDrop}
       >
         <CardHeader>
           <CardTitle className="font-headline text-2xl">Let's Get Started</CardTitle>
@@ -181,7 +176,16 @@ export function ResumeAnalyzer() {
         </CardHeader>
         <CardContent>
           <form action={formAction} className="space-y-6">
-            <div className="space-y-2 relative">
+            <div
+              className={cn(
+                'space-y-2 relative rounded-lg',
+                isDragging && 'ring-4 ring-primary/20'
+              )}
+              onDragEnter={handleDragEnter}
+              onDragLeave={handleDragLeave}
+              onDragOver={handleDragOver}
+              onDrop={handleDrop}
+            >
               <div className="flex justify-between items-center">
                 <Label htmlFor="resumeText">Paste Your Resume</Label>
                 <Button
@@ -201,20 +205,21 @@ export function ResumeAnalyzer() {
                   accept=".txt,.pdf"
                 />
               </div>
+
+              <Textarea
+                ref={resumeTextAreaRef}
+                id="resumeText"
+                name="resumeText"
+                placeholder="Paste the full text of your resume here..."
+                className={cn('min-h-[250px]', isDragging && 'border-primary bg-primary/5')}
+                required
+              />
               {isDragging && (
                 <div className="absolute inset-0 bg-primary/10 flex flex-col items-center justify-center rounded-md z-10 pointer-events-none">
                   <FileUp className="h-12 w-12 text-primary" />
                   <p className="mt-2 font-semibold text-primary">Drop your resume file here</p>
                 </div>
               )}
-              <Textarea
-                ref={resumeTextAreaRef}
-                id="resumeText"
-                name="resumeText"
-                placeholder="Paste the full text of your resume here..."
-                className="min-h-[250px]"
-                required
-              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="targetRole">Target Job Role</Label>
