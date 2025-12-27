@@ -1,36 +1,32 @@
-"use client";
+'use client';
 
-import { useFormState, useFormStatus } from "react-dom";
-import { useEffect } from "react";
-import Image from "next/image";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Button } from "@/components/ui/button";
-import { analyzeResume, type FormState } from "@/app/upload/actions";
-import { useToast } from "@/hooks/use-toast";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { useFormState, useFormStatus } from 'react-dom';
+import { useEffect, useState, useRef } from 'react';
+import Image from 'next/image';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Button } from '@/components/ui/button';
+import { analyzeResume, type FormState } from '@/app/upload/actions';
+import { useToast } from '@/hooks/use-toast';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import {
   AlertCircle,
   BadgeCheck,
   BookOpen,
   Bot,
   CircleX,
+  FileUp,
   Loader2,
   Sparkles,
   Target,
-} from "lucide-react";
-import { Badge } from "../ui/badge";
+} from 'lucide-react';
+import { Badge } from '../ui/badge';
+import { cn } from '@/lib/utils';
 
 const initialState: FormState = {
-  status: "idle",
+  status: 'idle',
   data: null,
   message: null,
 };
@@ -55,33 +51,103 @@ function SubmitButton() {
 export function ResumeAnalyzer() {
   const [state, formAction] = useFormState(analyzeResume, initialState);
   const { toast } = useToast();
+  const [isDragging, setIsDragging] = useState(false);
+  const resumeTextAreaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
-    if (state.status === "error" && state.message) {
+    if (state.status === 'error' && state.message) {
       toast({
-        variant: "destructive",
-        title: "Analysis Error",
+        variant: 'destructive',
+        title: 'Analysis Error',
         description: state.message,
       });
     }
   }, [state, toast]);
 
+  const handleDragEnter = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  };
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+
+    const files = e.dataTransfer.files;
+    if (files && files.length > 0) {
+      const file = files[0];
+      // For now, we only support plain text files. PDF parsing would require a library.
+      if (file.type === "text/plain") {
+        const reader = new FileReader();
+        reader.onload = (loadEvent) => {
+          const text = loadEvent.target?.result;
+          if (typeof text === 'string' && resumeTextAreaRef.current) {
+            resumeTextAreaRef.current.value = text;
+             toast({
+              title: "File Loaded",
+              description: `${file.name} content has been pasted into the text area.`,
+            });
+          }
+        };
+        reader.onerror = () => {
+           toast({
+            variant: "destructive",
+            title: "File Read Error",
+            description: `Could not read the file ${file.name}.`,
+          });
+        }
+        reader.readAsText(file);
+      } else {
+         toast({
+          variant: "destructive",
+          title: "Unsupported File Type",
+          description: "Please drop a plain text (.txt) file.",
+        });
+      }
+    }
+  };
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
-      <Card className="w-full shadow-lg bg-white">
+      <Card
+        className={cn(
+          'w-full shadow-lg bg-white transition-all',
+          isDragging && 'border-primary ring-4 ring-primary/20'
+        )}
+        onDragEnter={handleDragEnter}
+        onDragLeave={handleDragLeave}
+        onDragOver={handleDragOver}
+        onDrop={handleDrop}
+      >
         <CardHeader>
-          <CardTitle className="font-headline text-2xl">
-            Let's Get Started
-          </CardTitle>
-          <CardDescription>
-            Provide your resume details and your target job role.
-          </CardDescription>
+          <CardTitle className="font-headline text-2xl">Let's Get Started</CardTitle>
+          <CardDescription>Paste your resume details or drop a text file.</CardDescription>
         </CardHeader>
         <CardContent>
           <form action={formAction} className="space-y-6">
-            <div className="space-y-2">
+            <div className="space-y-2 relative">
               <Label htmlFor="resumeText">Paste Your Resume</Label>
+               {isDragging && (
+                <div className="absolute inset-0 bg-primary/10 flex flex-col items-center justify-center rounded-md z-10 pointer-events-none">
+                  <FileUp className="h-12 w-12 text-primary" />
+                  <p className="mt-2 font-semibold text-primary">Drop your resume file here</p>
+                </div>
+              )}
               <Textarea
+                ref={resumeTextAreaRef}
                 id="resumeText"
                 name="resumeText"
                 placeholder="Paste the full text of your resume here..."
@@ -104,34 +170,28 @@ export function ResumeAnalyzer() {
       </Card>
 
       <div className="sticky top-20">
-        {state.status === "idle" && (
+        {state.status === 'idle' && (
           <Card className="flex flex-col items-center justify-center p-8 text-center bg-white/50 border-2 border-dashed">
             <Bot size={48} className="text-muted-foreground mb-4" />
-            <h3 className="text-xl font-semibold font-headline">
-              Awaiting Your Resume
-            </h3>
+            <h3 className="text-xl font-semibold font-headline">Awaiting Your Resume</h3>
             <p className="text-muted-foreground mt-2">
-              Your personalized analysis will appear here once you submit your
-              details.
+              Your personalized analysis will appear here once you submit your details.
             </p>
           </Card>
         )}
 
-        {state.status === "loading" && (
+        {state.status === 'loading' && (
           <Card className="flex flex-col items-center justify-center p-8 text-center">
             <Loader2 size={48} className="text-primary animate-spin mb-4" />
-            <h3 className="text-xl font-semibold font-headline">
-              AI is Analyzing...
-            </h3>
+            <h3 className="text-xl font-semibold font-headline">AI is Analyzing...</h3>
             <p className="text-muted-foreground mt-2">
-              This may take a moment. We're crafting your personalized career
-              roadmap!
+              This may take a moment. We're crafting your personalized career roadmap!
             </p>
           </Card>
         )}
 
-        {state.status === "error" && state.message && (
-           <Alert variant="destructive">
+        {state.status === 'error' && state.message && (
+          <Alert variant="destructive">
             <AlertCircle className="h-4 w-4" />
             <AlertTitle>Analysis Failed</AlertTitle>
             <AlertDescription>
@@ -140,11 +200,11 @@ export function ResumeAnalyzer() {
           </Alert>
         )}
 
-        {state.status === "success" && state.data && (
+        {state.status === 'success' && state.data && (
           <Card className="shadow-lg bg-white max-h-[calc(100vh-6rem)] overflow-y-auto">
             <CardHeader>
               <CardTitle className="font-headline text-2xl flex items-center gap-2">
-                <Sparkles className="text-primary" /> Analysis for:{" "}
+                <Sparkles className="text-primary" /> Analysis for:{' '}
                 <span className="text-primary">{state.data.targetRole}</span>
               </CardTitle>
               <CardDescription>
@@ -166,7 +226,9 @@ export function ResumeAnalyzer() {
                     ))}
                   </div>
                 ) : (
-                  <p className="text-sm text-muted-foreground">No specific skills identified from the resume.</p>
+                  <p className="text-sm text-muted-foreground">
+                    No specific skills identified from the resume.
+                  </p>
                 )}
               </div>
               <div>
@@ -174,13 +236,13 @@ export function ResumeAnalyzer() {
                   <Target className="text-red-500" />
                   Missing Critical Skills
                 </h3>
-                 {state.data.missingSkills.length > 0 ? (
+                {state.data.missingSkills.length > 0 ? (
                   <div className="space-y-4">
                     {state.data.missingSkills.map((item, i) => (
                       <Card key={i} className="bg-background/50">
                         <CardHeader>
                           <CardTitle className="text-md flex items-center gap-2">
-                            <CircleX className="text-red-500 h-5 w-5"/>
+                            <CircleX className="text-red-500 h-5 w-5" />
                             {item.skill}
                           </CardTitle>
                         </CardHeader>
@@ -189,17 +251,21 @@ export function ResumeAnalyzer() {
                             <BookOpen className="text-primary h-4 w-4" />
                             Suggested Course:
                           </p>
-                          <p className="text-sm text-muted-foreground pl-6">{item.suggestedCourse}</p>
+                          <p className="text-sm text-muted-foreground pl-6">
+                            {item.suggestedCourse}
+                          </p>
                         </CardContent>
                       </Card>
                     ))}
                   </div>
                 ) : (
-                    <div className="text-center py-4 bg-green-50 border-green-200 border rounded-lg">
-                        <BadgeCheck className="h-8 w-8 text-green-600 mx-auto mb-2"/>
-                        <p className="font-semibold text-green-800">Excellent Match!</p>
-                        <p className="text-sm text-green-700">Your resume shows a strong alignment with this role.</p>
-                    </div>
+                  <div className="text-center py-4 bg-green-50 border-green-200 border rounded-lg">
+                    <BadgeCheck className="h-8 w-8 text-green-600 mx-auto mb-2" />
+                    <p className="font-semibold text-green-800">Excellent Match!</p>
+                    <p className="text-sm text-green-700">
+                      Your resume shows a strong alignment with this role.
+                    </p>
+                  </div>
                 )}
               </div>
             </CardContent>
